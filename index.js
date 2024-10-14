@@ -26,6 +26,8 @@ const corsOptions = {
 const server = createServer(app);
 const io = new Server(server, { cors: corsOptions });
 
+app.get("/", (req, res) => res.send("펫케어 mqtt 서버"));
+
 io.on("connection", (socket) => {
     socket.on("setDeviceId", (data) => {
         const deviceId = data.deviceId;
