@@ -7,9 +7,9 @@ const { Server } = require("socket.io");
 const options = {
     port: 8883,
     protocol: "mqtts",
-    key: fs.readFileSync("data/claim-private.key"),
-    cert: fs.readFileSync("data/claim-cert.pem"),
-    ca: fs.readFileSync("data/root-CA.crt"),
+    key: fs.readFileSync("public/data/claim-private.key"),
+    cert: fs.readFileSync("public/data/claim-cert.pem"),
+    ca: fs.readFileSync("public/data/root-CA.crt"),
     rejectUnauthorized: true,
 };
 
