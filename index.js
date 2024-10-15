@@ -3,13 +3,13 @@ const fs = require("fs");
 const { createServer } = require("http");
 const mqtt = require("mqtt");
 const { Server } = require("socket.io");
-
+const path = require("path");
 const options = {
     port: 8883,
     protocol: "mqtts",
-    key: fs.readFileSync("public/data/claim-private.key"),
-    cert: fs.readFileSync("public/data/claim-cert.pem"),
-    ca: fs.readFileSync("public/data/root-CA.crt"),
+    key: fs.readFileSync(path.resolve("public/data/claim-private.key")),
+    cert: fs.readFileSync(path.resolve("public/data/claim-cert.pem")),
+    ca: fs.readFileSync(path.resolve("public/data/root-CA.crt")),
     rejectUnauthorized: true,
 };
 
