@@ -4,6 +4,7 @@ const { createServer } = require("http");
 const mqtt = require("mqtt");
 const { Server } = require("socket.io");
 const path = require("path");
+const cors = require("cors");
 const options = {
     port: 8883,
     protocol: "mqtts",
@@ -24,7 +25,7 @@ const corsOptions = {
     allowedHeaders: ["Content-Type", "Authorization"],
 };
 const server = createServer(app);
-const io = new Server(server, { cors: corsOptions });
+const io = new Server(server, { cors: cors() });
 
 app.get("/", (req, res) => res.send("펫케어 mqtt 서버"));
 
