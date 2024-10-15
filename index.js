@@ -19,14 +19,35 @@ const client = mqtt.connect("mqtts://axjobfp4mqj2j-ats.iot.ap-northeast-2.amazon
 client.on("connect", () => {});
 
 const app = express();
-app.use(cors());
-const corsOptions = {
-    origin: "*",
-    methods: ["GET", "POST"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-};
+
+const allowedOrigins = [
+    "http://localhost:5173",
+    "https://amuzcorp-pet-care-zone-webview.vercel.app",
+];
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+                callback(null, true); // 허용
+            } else {
+                callback(new Error("Not allowed by CORS")); // 차단
+            }
+        },
+    })
+);
+
 const server = createServer(app);
-const io = new Server(server, { cors: cors() });
+const io = new Server(server, {
+    cors: cors({
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+                callback(null, true); // 허용
+            } else {
+                callback(new Error("Not allowed by CORS")); // 차단
+            }
+        },
+    }),
+});
 
 app.get("/", (req, res) => res.send("펫케어 mqtt 서버"));
 
