@@ -24,30 +24,17 @@ const allowedOrigins = [
     "http://localhost:5173",
     "https://amuzcorp-pet-care-zone-webview.vercel.app",
 ];
-app.use(
-    cors({
-        origin: (origin, callback) => {
-            if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-                callback(null, true); // 허용
-            } else {
-                callback(new Error("Not allowed by CORS")); // 차단
-            }
-        },
-    })
-);
 
+const corsOptions = {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
 const server = createServer(app);
-const io = new Server(server, {
-    cors: cors({
-        origin: (origin, callback) => {
-            if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-                callback(null, true); // 허용
-            } else {
-                callback(new Error("Not allowed by CORS")); // 차단
-            }
-        },
-    }),
-});
+const io = new Server(server, { cors: corsOptions });
 
 app.get("/", (req, res) => res.send("펫케어 mqtt 서버"));
 
