@@ -19,6 +19,7 @@ const client = mqtt.connect("mqtts://axjobfp4mqj2j-ats.iot.ap-northeast-2.amazon
 client.on("connect", () => {});
 
 const app = express();
+app.use(cors());
 const corsOptions = {
     origin: "*",
     methods: ["GET", "POST"],
