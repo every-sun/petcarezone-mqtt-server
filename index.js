@@ -59,9 +59,8 @@ io.on("connection", (socket) => {
     });
 
     client.on("message", (topic, message) => {
-        console.log("Message received");
         const msg = message.toString();
-        io.emit("mqttMessage", { topic, msg });
+        io.emit(topic, { msg });
     });
 
     socket.on("disconnect", () => {
