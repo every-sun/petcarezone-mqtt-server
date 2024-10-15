@@ -18,6 +18,11 @@ const client = mqtt.connect("mqtts://axjobfp4mqj2j-ats.iot.ap-northeast-2.amazon
 
 client.on("connect", () => {});
 
+client.on("message", (topic, message) => {
+    const msg = message.toString();
+    io.emit(topic, { msg });
+});
+
 const app = express();
 
 const allowedOrigins = [
@@ -56,11 +61,6 @@ io.on("connection", (socket) => {
                 console.log(`Subscribed to iot/petcarezone/topic/events/${deviceId}`);
             }
         });
-    });
-
-    client.on("message", (topic, message) => {
-        const msg = message.toString();
-        io.emit(topic, { msg });
     });
 
     socket.on("disconnect", () => {
