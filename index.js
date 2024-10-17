@@ -45,8 +45,6 @@ app.get("/", (req, res) => res.send("펫케어 mqtt 서버"));
 
 io.on("connection", (socket) => {
     socket.on("setDeviceId", (data) => {
-        socket.emit("deviceIdSet", { success: true, deviceId: data });
-
         const deviceId = data.deviceId;
         client.subscribe(`iot/petcarezone/topic/states/${deviceId}`, (err) => {
             if (err) {
