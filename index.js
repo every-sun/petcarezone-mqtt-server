@@ -31,14 +31,14 @@ const upload = multer(); // 메모리 저장소 사용
 app.get("/", (req, res) => res.send("펫케어 서버"));
 
 app.post("/convert", upload.single("file"), async (req, res) => {
-    const refinedBlob = await makeSeekableVideoBlobFromBlob(req.file.buffer, 5000);
+    const refinedBlob = await makeSeekableVideoBlobFromBlob(req.file.buffer);
 
     // 응답을 Blob 데이터로 설정
     res.setHeader("Content-Type", "video/webm"); // 응답 콘텐츠 타입 설정
     res.send(refinedBlob); // 수정된 Blob 데이터 전송
 });
 
-async function makeSeekableVideoBlobFromBlob(_buffer, duration) {
+async function makeSeekableVideoBlobFromBlob(_buffer) {
     const ebmlDecoder = new ebml.Decoder();
     const ebmlReader = new ebml.Reader();
     const ebmlTools = ebml.tools;
