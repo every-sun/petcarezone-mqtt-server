@@ -1,30 +1,15 @@
 const express = require("express");
 const fs = require("fs");
 const { createServer } = require("http");
-const mqtt = require("mqtt");
-const { Server } = require("socket.io");
 const path = require("path");
 const cors = require("cors");
-const options = {
-    port: 8883,
-    protocol: "mqtts",
-    key: fs.readFileSync(path.resolve("public/data/claim-private.key")),
-    cert: fs.readFileSync(path.resolve("public/data/claim-cert.pem")),
-    ca: fs.readFileSync(path.resolve("public/data/root-CA.crt")),
-    rejectUnauthorized: true,
-};
-
-const client = mqtt.connect("mqtts://axjobfp4mqj2j-ats.iot.ap-northeast-2.amazonaws.com", options);
-
-client.on("connect", () => {});
-
-client.on("message", (topic, message) => {
-    const msg = message.toString();
-    io.emit(topic, { msg });
-});
-
 const app = express();
+const multer = require("multer");
+const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
+const ffmpeg = require("fluent-ffmpeg");
+ffmpeg.setFfmpegPath(ffmpegPath);
 
+const upload = multer({ dest: "uploads/" });
 const allowedOrigins = [
     "http://localhost:5173",
     "https://amuzcorp-pet-care-zone-webview.vercel.app",
@@ -39,33 +24,34 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 const server = createServer(app);
-const io = new Server(server, { cors: corsOptions });
 
-app.get("/", (req, res) => res.send("펫케어 mqtt 서버"));
+app.get("/", (req, res) => res.send("펫케어 서버"));
 
-io.on("connection", (socket) => {
-    socket.on("setDeviceId", (data) => {
-        const deviceId = data.deviceId;
-        client.subscribe(`iot/petcarezone/topic/states/${deviceId}`, (err) => {
-            if (err) {
-                console.error("Subscription error:", err);
-            } else {
-                console.log(`Subscribed to iot/petcarezone/topic/states/${deviceId}`);
-            }
-        });
+app.post("/convert", upload.single("file"), (req, res) => {
+    const webmFilePath = req.file.path;
+    const outputDir = path.join(__dirname, "converted");
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+    }
+    const outputFilePath = path.join("converted", `${Date.now()}.mp4`);
 
-        client.subscribe(`iot/petcarezone/topic/events/${deviceId}`, (err) => {
-            if (err) {
-                console.error("Subscription error:", err);
-            } else {
-                console.log(`Subscribed to iot/petcarezone/topic/events/${deviceId}`);
-            }
-        });
-    });
-
-    socket.on("disconnect", () => {
-        console.log("Client disconnected");
-    });
+    ffmpeg(webmFilePath)
+        .output(outputFilePath)
+        .on("end", () => {
+            // 변환 완료 후 MP4 파일을 전송
+            res.sendFile(outputFilePath, { root: "." }, (err) => {
+                if (err) console.error("Error sending file:", err);
+                // 변환된 파일과 원본 파일 삭제
+                fs.unlinkSync(outputFilePath);
+                fs.unlinkSync(webmFilePath);
+            });
+        })
+        .on("error", (err) => {
+            console.error("FFmpeg error:", err);
+            res.status(500).send("Conversion failed");
+            fs.unlinkSync(webmFilePath);
+        })
+        .run();
 });
 
 server.listen(3000);
