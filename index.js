@@ -56,7 +56,7 @@ async function makeSeekableVideoBlobFromBlob(_buffer, duration) {
 
     const refinedMetadataBuf = ebmlTools.makeMetadataSeekable(
         ebmlReader.metadatas,
-        duration,
+        ebmlReader.duration,
         ebmlReader.cues
     );
     const body = buffer.slice(ebmlReader.metadataSize);
