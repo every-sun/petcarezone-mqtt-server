@@ -33,9 +33,11 @@ app.post("/convert", upload.single("file"), async (req, res) => {
     try {
         const refinedBuffer = await injectMetadata(req.file.buffer);
 
-        // 응답을 WebM 데이터로 설정
-        res.setHeader("Content-Type", "video/webm"); // 응답 콘텐츠 타입 설정
-        res.send(refinedBuffer); // Buffer 전송
+        // 적절한 헤더 설정
+        res.setHeader("Content-Disposition", "attachment; filename=processed_video.webm");
+        res.setHeader("Content-Type", "video/webm");
+
+        res.send(refinedBuffer);
     } catch (error) {
         console.error("Error processing file:", error);
         res.status(500).send("Failed to process the file.");
@@ -51,21 +53,24 @@ const injectMetadata = async function (buffer) {
 
         // EBML 데이터 디코딩
         const elms = decoder.decode(buffer);
-        elms.forEach((elm) => {
-            reader.read(elm);
-        });
+        elms.forEach((elm) => reader.read(elm));
         reader.stop();
 
-        // 메타데이터 수정 (Seekable로 만들기)
+        // 로그 추가
+
+        // Seekable로 메타데이터 변환
         const refinedMetadataBuf = tools.makeMetadataSeekable(
             reader.metadatas,
-            reader.duration, // 영상 길이
-            reader.cues // 큐 데이터
+            reader.duration,
+            reader.cues
         );
 
-        const body = buffer.slice(reader.metadataSize);
+        const body = buffer.slice(reader.metadataSize || 0); // undefined 방지
         const refinedBuffer = Buffer.concat([Buffer.from(refinedMetadataBuf), body]);
-
+        console.log("Metadata Size:", reader.metadataSize);
+        console.log("Buffer Length:", buffer.length);
+        console.log("Duration:", reader.duration);
+        console.log("Refined Buffer Length:", refinedBuffer.length);
         return refinedBuffer;
     } catch (error) {
         console.error("Error injecting metadata:", error);
