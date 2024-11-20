@@ -40,7 +40,7 @@ app.post("/convert", upload.single("file"), async (req, res) => {
             .videoCodec("libx264") // H.264 코덱
             .videoBitrate("400k")
             .format("mp4") // 출력 포맷
-            .fps(20)
+            .fps(30)
             .size("640x360")
             // .vsync("vfr")
             .on("end", () => {
