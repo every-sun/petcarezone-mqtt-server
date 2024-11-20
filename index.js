@@ -38,10 +38,10 @@ app.post("/convert", upload.single("file"), async (req, res) => {
             .output(mp4FilePath) // 출력 파일 경로
             .noAudio()
             .videoCodec("libx264") // H.264 코덱
-            .videoBitrate("1000k")
+            .videoBitrate("500k")
             .format("mp4") // 출력 포맷
             .fps(30)
-            // .size("1280x720")
+            .size("640x360")
             // .vsync("vfr")
             .on("end", () => {
                 // 변환된 MP4 파일을 클라이언트로 응답
