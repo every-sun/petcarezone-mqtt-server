@@ -1,5 +1,4 @@
-const ebml = require("ts-ebml");
-
+const { Decoder, Reader, tools } = require("ts-ebml");
 const express = require("express");
 const fs = require("fs");
 const { createServer } = require("http");
@@ -31,38 +30,47 @@ const upload = multer(); // 메모리 저장소 사용
 app.get("/", (req, res) => res.send("펫케어 서버"));
 
 app.post("/convert", upload.single("file"), async (req, res) => {
-    const refinedBlob = await makeSeekableVideoBlobFromBlob(req.file.buffer);
+    try {
+        const refinedBuffer = await injectMetadata(req.file.buffer);
 
-    // 응답을 Blob 데이터로 설정
-    res.setHeader("Content-Type", "video/webm"); // 응답 콘텐츠 타입 설정
-    res.send(refinedBlob); // 수정된 Blob 데이터 전송
+        // 응답을 WebM 데이터로 설정
+        res.setHeader("Content-Type", "video/webm"); // 응답 콘텐츠 타입 설정
+        res.send(refinedBuffer); // Buffer 전송
+    } catch (error) {
+        console.error("Error processing file:", error);
+        res.status(500).send("Failed to process the file.");
+    }
 });
 
-async function makeSeekableVideoBlobFromBlob(_buffer) {
-    const ebmlDecoder = new ebml.Decoder();
-    const ebmlReader = new ebml.Reader();
-    const ebmlTools = ebml.tools;
+const injectMetadata = async function (buffer) {
+    try {
+        const decoder = new Decoder();
+        const reader = new Reader();
+        reader.logging = false;
+        reader.drop_default_duration = false;
 
-    const buffer = Buffer.from(_buffer); // 버퍼를 사용하여 파일을 처리합니다.
+        // EBML 데이터 디코딩
+        const elms = decoder.decode(buffer);
+        elms.forEach((elm) => {
+            reader.read(elm);
+        });
+        reader.stop();
 
-    ebmlReader.logging = true;
-    ebmlReader.drop_default_duration = false;
+        // 메타데이터 수정 (Seekable로 만들기)
+        const refinedMetadataBuf = tools.makeMetadataSeekable(
+            reader.metadatas,
+            reader.duration, // 영상 길이
+            reader.cues // 큐 데이터
+        );
 
-    const elms = ebmlDecoder.decode(buffer);
-    elms.forEach((elm) => {
-        ebmlReader.read(elm);
-    });
-    ebmlReader.stop();
+        const body = buffer.slice(reader.metadataSize);
+        const refinedBuffer = Buffer.concat([Buffer.from(refinedMetadataBuf), body]);
 
-    const refinedMetadataBuf = ebmlTools.makeMetadataSeekable(
-        ebmlReader.metadatas,
-        ebmlReader.duration,
-        ebmlReader.cues
-    );
-    const body = buffer.slice(ebmlReader.metadataSize);
-    const refined = Buffer.concat([Buffer.from(refinedMetadataBuf), body]);
-
-    return refined;
-}
+        return refinedBuffer;
+    } catch (error) {
+        console.error("Error injecting metadata:", error);
+        throw error;
+    }
+};
 
 server.listen(3000);
