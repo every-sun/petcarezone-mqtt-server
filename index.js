@@ -1,4 +1,3 @@
-const { Decoder, Reader, tools } = require("ts-ebml");
 const express = require("express");
 const fs = require("fs");
 const { createServer } = require("http");
@@ -9,7 +8,6 @@ const multer = require("multer");
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 const ffmpeg = require("fluent-ffmpeg");
 ffmpeg.setFfmpegPath(ffmpegPath);
-const { exec } = require("child_process");
 const allowedOrigins = [
     "http://localhost:5173",
     "https://amuzcorp-pet-care-zone-webview.vercel.app",
@@ -35,15 +33,17 @@ app.post("/convert", upload.single("file"), async (req, res) => {
         const mp4FilePath = path.join("uploads", `${Date.now()}.mp4`); // 변환된 MP4 파일 경로
 
         // FFmpeg 변환 시작
-        ffmpeg(webmFilePath)
+        ffmpeg()
+            .input(webmFilePath)
             .output(mp4FilePath) // 출력 파일 경로
             .noAudio()
             .videoCodec("libx264") // H.264 코덱
             .videoBitrate("1000k")
             .format("mp4") // 출력 포맷
+            .fps(30)
+            // .size("1280x720")
+            // .vsync("vfr")
             .on("end", () => {
-                console.log("Conversion finished!");
-
                 // 변환된 MP4 파일을 클라이언트로 응답
                 res.setHeader("Content-Type", "video/mp4");
                 res.setHeader("Content-Disposition", "attachment; filename=converted_video.mp4");
